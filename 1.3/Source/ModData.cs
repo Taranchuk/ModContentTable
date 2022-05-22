@@ -173,14 +173,16 @@ namespace ModContentTable
 
         public void CreateContentData()
         {
-            tmpDefs = defs.ToHashSet();
-            List<string> output = new List<string>();
-            foreach (var data in categoryValidators)
+            if (contentData.NullOrEmpty())
             {
-                OutputAmount(output, data.Key, data.Value);
+                tmpDefs = defs.ToHashSet();
+                List<string> output = new List<string>();
+                foreach (var data in categoryValidators)
+                {
+                    OutputAmount(output, data.Key, data.Value);
+                }
+                contentData = "(Found defs: " + foundDefs.Sum(x => x.Value) + ") - " + string.Join(", ", output);
             }
-            contentData = "(Found defs: " + foundDefs.Sum(x => x.Value) + ") - " + string.Join(", ", output);
-
         }
 
         private void OutputAmount(List<string> output, string category, Func<Def, bool> validator)
