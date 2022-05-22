@@ -15,10 +15,11 @@ namespace ModContentTable
         public static void ModContent()
         {
             CreateModContentData();
-            var ordered = modsWithDefs.Where(modData => modData.Value.foundDefs.Sum(x => x.Value) > 0)
-                .OrderByDescending(x => x.Value.foundDefs.Sum(y => y.Value)).ToList();
+            var ordered = modsWithDefs.OrderByDescending(x => x.Value.foundDefs.Sum(y => y.Value)).ToList();
             var list = new List<TableDataGetter<KeyValuePair<string, ModData>>>();
             list.Add(new TableDataGetter<KeyValuePair<string, ModData>>("Mod name", (KeyValuePair<string, ModData> kvp) => kvp.Key));
+            list.Add(new TableDataGetter<KeyValuePair<string, ModData>>("Total defs", (KeyValuePair<string, ModData> kvp) => kvp.Value.defCount));
+            list.Add(new TableDataGetter<KeyValuePair<string, ModData>>("Is C# mod", (KeyValuePair<string, ModData> kvp) => kvp.Value.isCSharpMod));
             foreach (var key in ModData.categoryValidators.Keys)
             {
                 list.Add(new TableDataGetter<KeyValuePair<string, ModData>>(key.CapitalizeFirst(), (KeyValuePair<string, ModData> kvp) =>
@@ -60,26 +61,30 @@ namespace ModContentTable
                 {
                     foreach (var def in GenDefDatabase.GetAllDefsInDatabaseForDef(item))
                     {
-                        if ((!def?.modContentPack?.IsCoreMod ?? false)
-                            && (def?.modContentPack?.PackageId != ModContentPack.RoyaltyModPackageId)
-                            && (def?.modContentPack?.PackageId != ModContentPack.IdeologyModPackageId))
+                        if (def.modContentPack != null && !def.modContentPack.IsOfficialMod)
                         {
                             var name = def?.modContentPack?.Name;
                             if (name != null)
                             {
-                                if (modsWithDefs.ContainsKey(name))
+                                if (!modsWithDefs.TryGetValue(name, out var modData))
                                 {
-                                    modsWithDefs[name].RegisterDef(def);
+                                    modsWithDefs[name] = modData = new ModData();
                                 }
-                                else
-                                {
-                                    var modData = new ModData();
-                                    modData.RegisterDef(def);
-                                    modsWithDefs[name] = modData;
-                                }
+                                modData.RegisterDef(def);
                             }
                         }
+                    }
+                }
 
+                foreach (ModContentPack mod in LoadedModManager.RunningModsListForReading)
+                {
+                    if (!mod.IsOfficialMod)
+                    {
+                        if (!modsWithDefs.TryGetValue(mod.Name, out var modData))
+                        {
+                            modsWithDefs[mod.Name] = modData = new ModData();
+                        }
+                        modData.isCSharpMod = mod.assemblies?.loadedAssemblies?.Count > 0;
                     }
                 }
             }
@@ -87,6 +92,7 @@ namespace ModContentTable
     }
     public class ModData
     {
+        public bool isCSharpMod;
         public int defCount;
         private HashSet<Def> defs = new HashSet<Def>();
         private HashSet<Def> tmpDefs = new HashSet<Def>();
