@@ -15,6 +15,10 @@ namespace ModContentTable
         public static void ModContent()
         {
             CreateModContentData();
+            foreach (var modData in modsWithDefs.Values)
+            {
+                modData.CreateContentData();
+            }
             var ordered = modsWithDefs.OrderByDescending(x => x.Value.foundDefs.Sum(y => y.Value)).ToList();
             var list = new List<TableDataGetter<KeyValuePair<string, ModData>>>();
             list.Add(new TableDataGetter<KeyValuePair<string, ModData>>("Mod name", (KeyValuePair<string, ModData> kvp) => kvp.Key));
