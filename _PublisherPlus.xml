@@ -3,6 +3,7 @@
   <Excluded>
     <exclude>.git</exclude>
     <exclude>1.3\Source</exclude>
+    <exclude>1.4\Source</exclude>
     <exclude>README.md</exclude>
   </Excluded>
 </Configuration>
